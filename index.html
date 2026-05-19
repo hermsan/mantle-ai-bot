@@ -46,7 +46,7 @@ h2.section-title span{color:#4af7c8}
 .card h3{color:#4af7c8;margin-bottom:14px;font-size:22px}
 .card p{color:#cbd5e1;font-size:15px}
 .mockup-container{text-align:center;padding:20px}
-.mockup-img{max-width:100%;height:auto;border-radius:12px;border:2px solid #1f3844;box-shadow:0 0 30px rgba(74,247,200,0.1)}
+.mockup-video{max-width:100%;height:auto;border-radius:12px;border:2px solid #1f3844;box-shadow:0 0 30px rgba(74,247,200,0.15)}
 footer{position:relative;z-index:5;text-align:center;padding:30px;color:#7dd3c0;background:#031016;margin-top:60px;border-top:1px solid #1f2937}
 @media(max-width:900px){.hero{grid-template-columns:1fr;text-align:center}.hero img{margin:auto}.hero-text p{margin:auto}.hero-text h1{font-size:42px}}
 canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:8;pointer-events:none;mix-blend-mode:screen}
@@ -125,7 +125,12 @@ canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:8;pointer-even
     <h2 class="section-title">Production <span>Interface Demo</span></h2>
     <div class="card mockup-container">
         <p style="margin-bottom: 20px; color: #cbd5e1;">Below is a visual simulation of the Mantle AI Agent responding to real-time telemetry inputs inside Telegram desktop environments.</p>
-        <img src="images/telegram-demo-screenshot.jpg" alt="Telegram Interface Demo" class="mockup-img" onerror="this.style.display='none'; alert('Tip: Put your telegram screenshot inside images/telegram-demo-screenshot.jpg to display the mockup!')">
+        
+        <video class="mockup-video" controls autoplay loop muted>
+            <source src="images/bot-demo.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+
         <p style="margin-top: 15px; font-size: 14px; color: #4af7c8;">⚡ Proactive Node Response Verified Status: 100% Operational</p>
     </div>
 </section>
@@ -245,5 +250,5 @@ c.style.boxShadow=
 });
 },1200);
 </script>
-</body>
+</body> 
 </html>
