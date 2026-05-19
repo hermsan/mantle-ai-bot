@@ -1,3 +1,3 @@
-requests
 pyTelegramBotAPI
-google-generativeai
+requests
+google-genai
