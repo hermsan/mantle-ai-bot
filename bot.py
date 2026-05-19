@@ -153,7 +153,6 @@ def analyze_tx(message):
         tx_data = res["result"]
         bot.send_chat_action(message.chat.id, "typing")
 
-        # Refactored prompt to strictly look like an Alpha/Anomaly hunting agent
         prompt = (
             f"Analyze this Mantle Network transaction data like an expert on-chain analyst. "
             f"Identify any potential smart money footprints, contract execution meaning, and security anomalies.\n\n"
@@ -172,7 +171,7 @@ def analyze_tx(message):
         bot.reply_to(message, f"❌ Analytical breakdown error: {e}")
 
 # =====================================================================
-# 💬 AI CHAT
+# 💬 AI CHAT (Google Search Grounding Enabled)
 # =====================================================================
 @bot.message_handler(func=lambda m: True)
 def chat_ai(message):
@@ -183,6 +182,7 @@ def chat_ai(message):
 
         bot.send_chat_action(message.chat.id, "typing")
         
+        # Tambahkan tools google_search agar Gemini bisa browsing harga token terupdate
         response = ai_client.models.generate_content(
             model='gemini-2.5-flash',
             contents=message.text,
@@ -190,8 +190,11 @@ def chat_ai(message):
                 system_instruction=(
                     "You are the Mantle AI Intelligence Agent. Your job is to help users scan, understand, "
                     "and find anomalies or alpha within the Mantle Network ecosystem. Answer cleanly, shortly, "
-                    "and professionally in English. Do not write in Indonesian."
-                )
+                    "and professionally in English. Do not write in Indonesian. If users ask about coin or token "
+                    "prices (such as MNT, BTC, or ETH), utilize your search tool to give them the precise, live market data."
+                ),
+                tools=[{"google_search": {}}],  # 🌟 FITUR BROWSING REAL-TIME AKTIF
+                max_output_tokens=1000
             )
         )
         bot.reply_to(message, response.text[:3500] if response.text else "No intelligence returned.")
