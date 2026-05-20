@@ -1,4 +1,4 @@
-pyTelegramBotAPI
-requests
+pyTelegramBotAPI==4.22.1
 python-dotenv
+requests
 google-genai
