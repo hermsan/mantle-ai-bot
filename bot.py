@@ -2,13 +2,22 @@ import os
 import time
 import threading
 import requests
+from pathlib import Path
+from dotenv import load_dotenv
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import telebot
 from google import genai
 from google.genai import types
 
 # =====================================================================
-# 🔐 CONFIG
+# 🟢 ENVIRONMENT INITIALIZATION
+# =====================================================================
+# Load environment variables from the root .env file
+env_path = Path('.') / '.env'
+load_dotenv(dotenv_path=env_path)
+
+# =====================================================================
+# 🔐 SYSTEM CONFIGURATION
 # =====================================================================
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -18,9 +27,10 @@ if not TELEGRAM_TOKEN or not GEMINI_API_KEY:
     print("❌ ERROR: Missing environment variables (TELEGRAM_TOKEN / GEMINI_API_KEY)")
     exit(1)
 
+# Initialize Telegram Bot Instance
 bot = telebot.TeleBot(TELEGRAM_TOKEN.strip())
 
-# Initialize the modern, unified Google GenAI Client
+# Initialize Modern Google GenAI Unified Client
 try:
     ai_client = genai.Client(api_key=GEMINI_API_KEY.strip())
     print("✓ Modern Gemini GenAI Client successfully initialized.")
@@ -29,7 +39,7 @@ except Exception as e:
     ai_client = None
 
 # =====================================================================
-# 🌐 RPC HELPER (Mantle Network)
+# 🌐 MANTLE NETWORK RPC HELPER
 # =====================================================================
 def rpc_call(method, params=None):
     if params is None:
@@ -45,7 +55,7 @@ def rpc_call(method, params=None):
     return r.json()
 
 # =====================================================================
-# 🤖 BOT COMMANDS (START / HELP)
+# 🤖 TELEGRAM BOT CORE COMMANDS
 # =====================================================================
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -133,7 +143,7 @@ def tx(message):
         bot.reply_to(message, f"❌ Transaction error: {e}")
 
 # =====================================================================
-# 🧠 AI ANALYZE (Enhanced for Hackathon Judging)
+# 🧠 AI ON-CHAIN AUDITING Agent
 # =====================================================================
 @bot.message_handler(commands=['analyze'])
 def analyze_tx(message):
@@ -171,7 +181,7 @@ def analyze_tx(message):
         bot.reply_to(message, f"❌ Analytical breakdown error: {e}")
 
 # =====================================================================
-# 💬 AI CHAT (Google Search Grounding Enabled)
+# 💬 AI NATURAL CHAT INTERACTION (With Hardcoded Price Fetcher Bypass)
 # =====================================================================
 @bot.message_handler(func=lambda m: True)
 def chat_ai(message):
@@ -181,19 +191,43 @@ def chat_ai(message):
             return
 
         bot.send_chat_action(message.chat.id, "typing")
-        
-        # Tambahkan tools google_search agar Gemini bisa browsing harga token terupdate
+        user_text = message.text.lower()
+        price_info = ""
+
+        # 🚀 TRICK BYPASS: Cek mandiri jika pengguna menanyakan harga token
+        if "price" in user_text or "harga" in user_text:
+            try:
+                # Tembak langsung ke API CoinGecko Publik (Tanpa API Key, 100% Gratis & Live)
+                url = "https://api.coingecko.com/api/v3/simple/price?ids=mantle,bitcoin,ethereum&vs_currencies=usd"
+                res = requests.get(url, timeout=5).json()
+                
+                mnt_p = res.get("mantle", {}).get("usd", 0)
+                btc_p = res.get("bitcoin", {}).get("usd", 0)
+                eth_p = res.get("ethereum", {}).get("usd", 0)
+                
+                price_info = (
+                    f"\n\n📊 [LIVE MARKET DATA ATTACHED BY MANTLE AGENT]:\n"
+                    f"• Mantle (MNT): ${mnt_p:,.3f} USD\n"
+                    f"• Bitcoin (BTC): ${btc_p:,.2f} USD\n"
+                    f"• Ethereum (ETH): ${eth_p:,.2f} USD\n"
+                    f"Please ingest this live data to answer the user's query precisely."
+                )
+            except Exception as e:
+                print("Price API Fetch Error:", e)
+
+        # Gabungkan pertanyaan user dengan data harga live agar dibaca oleh Gemini
+        final_prompt = message.text + price_info
+
         response = ai_client.models.generate_content(
             model='gemini-2.5-flash',
-            contents=message.text,
+            contents=final_prompt,
             config=types.GenerateContentConfig(
                 system_instruction=(
                     "You are the Mantle AI Intelligence Agent. Your job is to help users scan, understand, "
                     "and find anomalies or alpha within the Mantle Network ecosystem. Answer cleanly, shortly, "
-                    "and professionally in English. Do not write in Indonesian. If users ask about coin or token "
-                    "prices (such as MNT, BTC, or ETH), utilize your search tool to give them the precise, live market data."
+                    "and professionally in English. Do not write in Indonesian. If the live market data is attached "
+                    "in the prompt, use that data to give the exact current prices to the user with a professional breakdown."
                 ),
-                tools=[{"google_search": {}}],  # 🌟 FITUR BROWSING REAL-TIME AKTIF
                 max_output_tokens=1000
             )
         )
@@ -203,7 +237,7 @@ def chat_ai(message):
         bot.reply_to(message, "⚠️ System load high. Please retry your query shortly.")
 
 # =====================================================================
-# ⚙️ WEB SERVER
+# ⚙️ HEALTH CHECK WEB SERVER
 # =====================================================================
 class FakeServer(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -217,13 +251,17 @@ def run_server():
     HTTPServer(("0.0.0.0", 7860), FakeServer).serve_forever()
 
 # =====================================================================
-# 🏃‍♂️ RUNNER
+# 🏃‍♂️ RUNNER (Anti-Crash Infinite Loop Protection)
 # =====================================================================
 if __name__ == "__main__":
     threading.Thread(target=run_server, daemon=True).start()
-    print("Mantle AI Agent running successfully...")
+    print("✓ Mantle AI Agent system is initialized.")
+    print("🚀 Bot is now actively monitoring Mantle Network...")
+    
     while True:
         try:
-            bot.infinity_polling(timeout=60, long_polling_timeout=60)
+            # skip_pending=True ignores flooded backlogs while the bot was recovering
+            bot.infinity_polling(timeout=20, long_polling_timeout=20, skip_pending=True)
         except Exception as e:
-            time.sleep(10)
+            print(f"⚠️ TeleBot Connection Glitch: {e}. Reconnecting in 5 seconds...")
+            time.sleep(5)
