@@ -1,3 +1,13 @@
+---
+title: Mantle AI Bot
+emoji: 🤖
+colorFrom: green
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
+
 # Mantle AI Assistant - Advanced On-Chain Intel & Alpha Agent
 
 An AI-powered Telegram Bot designed for the Mantle Network ecosystem, acting as an automated intelligence agent for developers and on-chain analysts to hunt alpha and audit transactions.
