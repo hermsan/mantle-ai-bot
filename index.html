@@ -3,252 +3,869 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mantle AI Assistant - On-Chain Intel Agent</title>
+
+<title>Mantle AI Agent | Blockchain Intelligence Assistant</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;scroll-behavior:smooth}
-body{background:linear-gradient(rgba(6,19,24,.45),rgba(6,19,24,.45)),url('https://images.unsplash.com/photo-1640161704729-cbe966a08476?q=80&w=1600&auto=format&fit=crop');background-size:cover;background-position:center;background-attachment:fixed;color:#fff;line-height:1.6}
-nav{position:sticky;z-index:20;top:0;background:rgba(4,14,20,.92);backdrop-filter:blur(10px);padding:16px 20px;display:flex;justify-content:center;gap:24px;border-bottom:1px solid #1f2937}
-nav a{text-decoration:none;color:#9fffe0;font-weight:bold;transition:color 0.3s}
-nav a:hover{color:#4af7c8}
-header{position:relative;z-index:5;padding:70px 20px;background:linear-gradient(rgba(3,16,22,.65),rgba(7,36,46,.75)),url('https://images.unsplash.com/photo-1639322537228-f710d846310a?q=80&w=1600&auto=format&fit=crop');background-size:cover;background-position:center;border-bottom:1px solid #16333d}
-.hero{max-width:1200px;margin:auto;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;position:relative;z-index:12}
-.hero-text h1{font-size:64px;line-height:1.05;margin-bottom:18px}
-.hero-text span{color:#4af7c8}
-.hero-text p{font-size:18px;color:#cbd5e1;max-width:500px}
-.coin-wrap{display:flex;justify-content:center;align-items:center;perspective:1200px;position:relative;z-index:12}
-.mantle-coin{width:260px;height:260px;border-radius:50%;background:rgba(74,247,200,.05);display:flex;justify-content:center;align-items:center;backdrop-filter:blur(6px);box-shadow:0 0 30px rgba(74,247,200,.3),0 0 80px rgba(74,247,200,.15);animation:spinCoin 8s linear infinite;transform-style:preserve-3d;position:relative}
-.mantle-coin::before{content:"";position:absolute;inset:-12px;border-radius:50%;border:2px solid rgba(74,247,200,.25);animation:pulseRing 3s infinite}
-.mantle-coin::after{content:"";position:absolute;width:100%;height:100%;border-radius:50%;box-shadow:0 0 60px rgba(74,247,200,.25);animation:glowPulse 2.5s infinite}
-.mantle-coin img{width:160px;height:160px;object-fit:contain;filter:drop-shadow(0 0 18px #4af7c8)}
-@keyframes spinCoin{0%{transform:rotateY(0deg) rotateX(8deg)}100%{transform:rotateY(360deg) rotateX(8deg)}}
-@keyframes pulseRing{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.18);opacity:0}}
-@keyframes glowPulse{0%,100%{opacity:.4}50%{opacity:1}}
-.cube-scene{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:6}
-.cube{position:absolute;width:70px;height:70px;border:2px solid rgba(74,247,200,.25);background:rgba(74,247,200,.05);backdrop-filter:blur(4px);transform-style:preserve-3d;animation:floatCube 10s infinite ease-in-out alternate;box-shadow:0 0 20px rgba(74,247,200,.15),0 0 40px rgba(74,247,200,.08)}
-.cube::before,.cube::after{content:"";position:absolute;inset:0;border:2px solid rgba(74,247,200,.15)}
-.cube::before{transform:translateZ(35px)}
-.cube::after{transform:rotateY(90deg) translateZ(35px)}
-.c1{top:15%;left:25%;animation-delay:0s}
-.c2{top:35%;left:60%;animation-delay:2s}
-.c3{top:60%;left:20%;animation-delay:4s}
-.c4{top:20%;left:75%;animation-delay:6s}
-.c5{top:65%;left:75%;animation-delay:8s}
-@keyframes floatCube{0%{transform:translateY(0px) rotateX(0deg) rotateY(0deg) scale(1);opacity:.35}50%{transform:translateY(-30px) rotateX(180deg) rotateY(180deg) scale(1.1);opacity:.75}100%{transform:translateY(-60px) rotateX(360deg) rotateY(360deg) scale(1);opacity:.35}}
-.btn{display:inline-block;margin:20px 10px 0 0;padding:14px 26px;border-radius:12px;background:#4af7c8;color:#001;text-decoration:none;font-weight:bold;transition:transform 0.2s, box-shadow 0.2s}
-.btn:hover{transform:translateY(-2px);box-shadow:0 0 15px rgba(74,247,200,0.6)}
-.btn.secondary{background:transparent;color:#4af7c8;border:2px solid #4af7c8}
-section{position:relative;z-index:5;padding:60px 20px;max-width:1200px;margin:auto;background:rgba(3,16,22,0.85);backdrop-filter:blur(8px);border:1px solid #1f3844;border-radius:18px;margin-top:40px}
-h2.section-title{text-align:center;margin-bottom:40px;font-size:36px;letter-spacing:1px}
-h2.section-title span{color:#4af7c8}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
-.card{background:#0d1b22;border:1px solid #1f3844;padding:28px;border-radius:18px;box-shadow:0 0 20px rgba(0,255,170,.05);transition:border-color 0.3s}
-.card:hover{border-color:#4af7c8}
-.card h3{color:#4af7c8;margin-bottom:14px;font-size:22px}
-.card p{color:#cbd5e1;font-size:15px}
-.mockup-container{text-align:center;padding:20px}
-.mockup-video{max-width:100%;height:auto;border-radius:12px;border:2px solid #1f3844;box-shadow:0 0 30px rgba(74,247,200,0.15)}
-footer{position:relative;z-index:5;text-align:center;padding:30px;color:#7dd3c0;background:#031016;margin-top:60px;border-top:1px solid #1f2937}
-@media(max-width:900px){.hero{grid-template-columns:1fr;text-align:center}.hero img{margin:auto}.hero-text p{margin:auto}.hero-text h1{font-size:42px}}
-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:8;pointer-events:none;mix-blend-mode:screen}
-.glow{position:fixed;width:300px;height:300px;border-radius:50%;background:#00ffd544;filter:blur(80px);z-index:-1;animation:floatGlow 12s infinite alternate}
-.glow.one{top:10%;left:10%}.glow.two{bottom:10%;right:10%}
-@keyframes floatGlow{from{transform:translate(0,0)}to{transform:translate(120px,60px)}}
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+scroll-behavior:smooth;
+}
+
+body{
+font-family:'Inter',sans-serif;
+background:#020817;
+color:white;
+overflow-x:hidden;
+}
+
+/* ========================= */
+/* BACKGROUND */
+/* ========================= */
+
+.bg-grid{
+position:fixed;
+width:100%;
+height:100%;
+top:0;
+left:0;
+background-image:
+linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+background-size:40px 40px;
+z-index:-3;
+}
+
+.glow{
+position:fixed;
+width:400px;
+height:400px;
+border-radius:50%;
+filter:blur(120px);
+opacity:0.25;
+z-index:-2;
+animation:floatGlow 10s infinite alternate ease-in-out;
+}
+
+.glow.one{
+background:#00ffcc;
+top:-100px;
+left:-100px;
+}
+
+.glow.two{
+background:#0099ff;
+bottom:-120px;
+right:-120px;
+}
+
+@keyframes floatGlow{
+from{
+transform:translate(0,0);
+}
+to{
+transform:translate(100px,50px);
+}
+}
+
+/* ========================= */
+/* NAVBAR */
+/* ========================= */
+
+nav{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+padding:18px 40px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:rgba(0,0,0,0.45);
+backdrop-filter:blur(12px);
+z-index:999;
+border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+.logo{
+font-family:'Orbitron',sans-serif;
+font-size:24px;
+font-weight:700;
+color:#00ffd5;
+}
+
+.nav-links{
+display:flex;
+gap:25px;
+}
+
+.nav-links a{
+text-decoration:none;
+color:white;
+transition:0.3s;
+font-size:15px;
+}
+
+.nav-links a:hover{
+color:#00ffd5;
+}
+
+/* ========================= */
+/* HERO */
+/* ========================= */
+
+.hero{
+min-height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:120px 10%;
+gap:60px;
+flex-wrap:wrap;
+}
+
+.hero-left{
+flex:1;
+min-width:300px;
+}
+
+.hero-left h1{
+font-size:72px;
+line-height:1.05;
+font-family:'Orbitron',sans-serif;
+margin-bottom:25px;
+}
+
+.hero-left h1 span{
+color:#00ffd5;
+}
+
+.hero-left p{
+font-size:18px;
+line-height:1.8;
+color:#cbd5e1;
+max-width:600px;
+}
+
+.hero-buttons{
+margin-top:30px;
+display:flex;
+gap:18px;
+flex-wrap:wrap;
+}
+
+.btn{
+padding:15px 28px;
+border-radius:14px;
+text-decoration:none;
+font-weight:600;
+transition:0.3s;
+display:inline-block;
+}
+
+.btn-primary{
+background:#00ffd5;
+color:black;
+box-shadow:0 0 20px rgba(0,255,213,0.5);
+}
+
+.btn-primary:hover{
+transform:translateY(-3px);
+}
+
+.btn-secondary{
+border:2px solid #00ffd5;
+color:#00ffd5;
+}
+
+.btn-secondary:hover{
+background:#00ffd5;
+color:black;
+}
+
+.hero-right{
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+min-width:300px;
+}
+
+.coin{
+width:320px;
+height:320px;
+border-radius:50%;
+background:rgba(255,255,255,0.04);
+display:flex;
+justify-content:center;
+align-items:center;
+backdrop-filter:blur(10px);
+animation:spin 12s linear infinite;
+box-shadow:
+0 0 30px rgba(0,255,213,0.4),
+0 0 80px rgba(0,255,213,0.15);
+}
+
+.coin img{
+width:180px;
+}
+
+@keyframes spin{
+0%{
+transform:rotateY(0deg);
+}
+100%{
+transform:rotateY(360deg);
+}
+}
+
+/* ========================= */
+/* STATS */
+/* ========================= */
+
+.stats{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:25px;
+padding:0 10% 80px;
+}
+
+.stat-card{
+background:rgba(255,255,255,0.03);
+border:1px solid rgba(255,255,255,0.08);
+padding:35px;
+border-radius:22px;
+text-align:center;
+backdrop-filter:blur(8px);
+transition:0.3s;
+}
+
+.stat-card:hover{
+transform:translateY(-5px);
+border-color:#00ffd5;
+}
+
+.stat-card h2{
+font-size:42px;
+color:#00ffd5;
+margin-bottom:10px;
+}
+
+/* ========================= */
+/* SECTION */
+/* ========================= */
+
+section{
+padding:100px 10%;
+}
+
+.section-title{
+text-align:center;
+font-size:48px;
+margin-bottom:60px;
+font-family:'Orbitron',sans-serif;
+}
+
+.section-title span{
+color:#00ffd5;
+}
+
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:25px;
+}
+
+.card{
+background:rgba(255,255,255,0.03);
+padding:30px;
+border-radius:22px;
+border:1px solid rgba(255,255,255,0.08);
+transition:0.3s;
+backdrop-filter:blur(10px);
+}
+
+.card:hover{
+transform:translateY(-5px);
+border-color:#00ffd5;
+}
+
+.card h3{
+margin-bottom:18px;
+color:#00ffd5;
+font-size:24px;
+}
+
+.card p{
+color:#cbd5e1;
+line-height:1.7;
+}
+
+/* ========================= */
+/* VIDEO GALLERY */
+/* ========================= */
+
+.video-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(420px,1fr));
+gap:30px;
+}
+
+.video-card{
+background:rgba(255,255,255,0.03);
+padding:20px;
+border-radius:22px;
+border:1px solid rgba(255,255,255,0.08);
+}
+
+.video-card video{
+width:100%;
+border-radius:18px;
+margin-bottom:15px;
+}
+
+.video-card h3{
+margin-bottom:10px;
+color:#00ffd5;
+}
+
+/* ========================= */
+/* ROADMAP */
+/* ========================= */
+
+.roadmap{
+display:flex;
+flex-direction:column;
+gap:30px;
+}
+
+.roadmap-item{
+background:rgba(255,255,255,0.03);
+padding:30px;
+border-left:5px solid #00ffd5;
+border-radius:16px;
+}
+
+/* ========================= */
+/* FOOTER */
+/* ========================= */
+
+footer{
+padding:40px;
+text-align:center;
+border-top:1px solid rgba(255,255,255,0.08);
+color:#94a3b8;
+}
+
+/* ========================= */
+/* RESPONSIVE */
+/* ========================= */
+
+@media(max-width:768px){
+
+.hero-left h1{
+font-size:48px;
+}
+
+.section-title{
+font-size:36px;
+}
+
+.video-grid{
+grid-template-columns:1fr;
+}
+
+nav{
+padding:18px 20px;
+}
+
+.nav-links{
+display:none;
+}
+
+}
+/* ========================= */
+/* ADVANCED AI GLOW EFFECT */
+/* ========================= */
+
+.card:hover{
+transform:translateY(-8px) scale(1.02);
+box-shadow:
+0 0 20px rgba(0,255,213,0.15),
+0 0 50px rgba(0,255,213,0.08);
+}
+
+.video-card:hover{
+transform:translateY(-8px);
+box-shadow:
+0 0 25px rgba(0,255,213,0.2);
+}
+
+.coin{
+animation:
+spin 12s linear infinite,
+floatCoin 4s ease-in-out infinite alternate;
+}
+
+@keyframes floatCoin{
+from{
+transform:translateY(0px);
+}
+to{
+transform:translateY(-18px);
+}
+}
+
 </style>
 </head>
 
-<body>
+<!-- ========================= -->
+<!-- BLOCKCHAIN PARTICLE EFFECT -->
+<!-- ========================= -->
+
 <canvas id="bg"></canvas>
-<div class="glow one"></div><div class="glow two"></div>
 
-<nav>
-<a href="#home">Home</a>
-<a href="#features">Core Features</a>
-<a href="#demo">Live Demo</a>
-<a href="#roadmap">Strategic Roadmap</a>
-<a href="#creator">Creator</a>
-</nav>
+<style>
 
-<header id="home">
-    <div class="cube-scene">
-        <div class="cube c1"></div>
-        <div class="cube c2"></div>
-        <div class="cube c3"></div>
-        <div class="cube c4"></div>
-        <div class="cube c5"></div>
-    </div>
-    <div class="hero">
-        <div class="coin-wrap">
-            <div class="mantle-coin">
-                <img src="images/mantle-logo.png" alt="Mantle Coin">
-            </div>
-        </div>
-        <div class="hero-text">
-            <h1>MANTLE <span>AI AGENT</span></h1>
-            <p>An intelligent, on-chain telemetry and alpha extraction bot for the Mantle ecosystem. Powered by Gemini 2.5 Flash and real-time JSON-RPC node systems.</p>
-            <a class="btn" href="https://t.me/MantleWhale_bot" target="_blank">Launch Telegram Bot</a>
-            <a class="btn secondary" href="#demo">View Demo UI</a>
-        </div>
-    </div>
-</header>
+#bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+z-index:-1;
+pointer-events:none;
+mix-blend-mode:screen;
+}
 
-<section id="features">
-    <h2 class="section-title">Powerful <span>Tools Suite</span></h2>
-    <div class="grid">
-        <div class="card">
-            <h3>Real-Time Cost Optimizer</h3>
-            <p>Fetches real-time Mantle base gas data in Gwei. Maximizes cost efficiency for high-frequency traders and deployment scripts.</p>
-        </div>
-        <div class="card">
-            <h3>Diagnostic State Tracker</h3>
-            <p>Monitors active block height generation on the Mantle Network layer instantly to track block confirmation latencies.</p>
-        </div>
-        <div class="card">
-            <h3>Instant Asset Auditor</h3>
-            <p>Queries precise MNT liquid asset balances on any given address directly from the latest state trie archive.</p>
-        </div>
-        <div class="card">
-            <h3>Transaction Metadata Lookup</h3>
-            <p>Unpacks ledger records instantly to verify fund routing parameters and native transfer payloads.</p>
-        </div>
-        <div class="card">
-            <h3>AI Anomaly & Alpha Detector</h3>
-            <p>Leverages large language models to dissect obscure smart contract telemetry into transparent intelligence, parsing whale footprints and threat vectors.</p>
-        </div>
-        <div class="card">
-            <h3>Ecosystem Guardrails</h3>
-            <p>Calibrated system instructions enforcing immutable topic lock—safeguarding production flows from conversational context deviation.</p>
-        </div>
-    </div>
-</section>
-
-<section id="demo">
-    <h2 class="section-title">Production <span>Interface Demo</span></h2>
-    <div class="card mockup-container">
-        <p style="margin-bottom: 20px; color: #cbd5e1;">Below is a visual simulation of the Mantle AI Agent responding to real-time telemetry inputs inside Telegram desktop environments.</p>
-        
-        <video class="mockup-video" controls autoplay loop muted>
-            <source src="images/bot-demo.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-
-        <p style="margin-top: 15px; font-size: 14px; color: #4af7c8;">⚡ Proactive Node Response Verified Status: 100% Operational</p>
-    </div>
-</section>
-
-<section id="roadmap">
-    <h2 class="section-title">Strategic <span>Roadmap</span></h2>
-    <div class="grid">
-        <div class="card">
-            <h3>Phase 1: Intel Agent</h3>
-            <p>Completed delivery of core telemetry commands, RPC hooks, and deep model semantic compilation for conversational audits.</p>
-        </div>
-        <div class="card">
-            <h3>Phase 2: Proactive Alerts</h3>
-            <p>Developing event listeners to automatically trigger alert streams in Telegram when large volume transactions (Whale Alerts) pass through Mantle pools.</p>
-        </div>
-        <div class="card">
-            <h3>Phase 3: Dashboard & RWA</h3>
-            <p>Expanding telemetry parsing to accommodate Liquid Staking Protocol data flows like mETH and USDY yields directly within the dashboard view.</p>
-        </div>
-    </div>
-</section>
-
-<section id="creator">
-    <h2 class="section-title">The <span>Developer</span></h2>
-    <div class="card" style="text-align: center;">
-        <p style="font-size: 18px; color: #4af7c8; margin-bottom: 10px; font-weight: bold;">Built for The Turing Test Hackathon 2026</p>
-        <p>Engineered by an independent Web3 builder focused on optimizing accessibility and technical transparency on the Mantle Network layer.</p>
-    </div>
-</section>
-
-<footer>© 2026 Mantle AI Assistant • Engineered on Mantle Layer-2 Infrastructure</footer>
+</style>
 
 <script>
+
 const c = document.getElementById('bg');
 const ctx = c.getContext('2d');
-let mouse = {x:null,y:null};
 
-function resize(){
-    c.width = window.innerWidth;
-    c.height = window.innerHeight;
+let mouse = {
+x:null,
+y:null
+};
+
+function resizeCanvas(){
+c.width = window.innerWidth;
+c.height = window.innerHeight;
 }
-resize();
-window.addEventListener('resize', resize);
+
+resizeCanvas();
+
+window.addEventListener('resize', resizeCanvas);
 
 window.addEventListener('mousemove', e=>{
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
+mouse.x = e.clientX;
+mouse.y = e.clientY;
 });
 
 const particles = [];
 
-for(let i=0;i<120;i++){
-    particles.push({
-        x:Math.random()*c.width,
-        y:Math.random()*c.height,
-        vx:(Math.random()-0.5)*0.8,
-        vy:(Math.random()-0.5)*0.8,
-        r:Math.random()*3+1
-    });
-}
+for(let i=0;i<140;i++){
 
-function draw(){
-    ctx.clearRect(0,0,c.width,c.height);
+particles.push({
 
-    particles.forEach(p=>{
-        p.x += p.vx;
-        p.y += p.vy;
+x:Math.random()*c.width,
+y:Math.random()*c.height,
 
-        if(p.x<0||p.x>c.width)p.vx*=-1;
-        if(p.y<0||p.y>c.height)p.vy*=-1;
+vx:(Math.random()-0.5)*0.9,
+vy:(Math.random()-0.5)*0.9,
 
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle='rgba(74,247,200,0.95)';
-        ctx.fill();
+r:Math.random()*3+1,
 
-        const dx = p.x-mouse.x;
-        const dy = p.y-mouse.y;
-        const dist = Math.sqrt(dx*dx+dy*dy);
+life:Math.random()*100
 
-        if(dist<170){
-            ctx.strokeStyle=`rgba(74,247,200,${1-dist/170})`;
-            ctx.lineWidth=1;
-            ctx.beginPath();
-            ctx.moveTo(p.x,p.y);
-            ctx.lineTo(mouse.x,mouse.y);
-            ctx.stroke();
-        }
-    });
-
-    for(let i=0;i<particles.length;i++){
-        for(let j=i+1;j<particles.length;j++){
-            const dx = particles[i].x-particles[j].x;
-            const dy = particles[i].y-particles[j].y;
-            const dist = Math.sqrt(dx*dx+dy*dy);
-
-            if(dist<120){
-                ctx.strokeStyle=`rgba(74,247,200,${0.25-(dist/120)*0.2})`;
-                ctx.beginPath();
-                ctx.moveTo(particles[i].x,particles[i].y);
-                ctx.lineTo(particles[j].x,particles[j].y);
-                ctx.stroke();
-            }
-        }
-    }
-
-    requestAnimationFrame(draw);
-}
-
-draw();
-</script>
-<script>
-setInterval(()=>{
-document.querySelectorAll('.cube').forEach(c=>{
-c.style.boxShadow=
-`0 0 ${20+Math.random()*50}px rgba(74,247,200,.35)`;
 });
-},1200);
+
+}
+
+function drawParticles(){
+
+ctx.clearRect(0,0,c.width,c.height);
+
+particles.forEach(p=>{
+
+p.x += p.vx;
+p.y += p.vy;
+
+p.life += 0.01;
+
+if(p.x<0 || p.x>c.width) p.vx *= -1;
+if(p.y<0 || p.y>c.height) p.vy *= -1;
+
+const glow = 0.6 + Math.sin(p.life)*0.4;
+
+ctx.beginPath();
+ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+
+ctx.fillStyle = `rgba(0,255,213,${glow})`;
+
+ctx.shadowBlur = 18;
+ctx.shadowColor = '#00ffd5';
+
+ctx.fill();
+
+const dxMouse = p.x - mouse.x;
+const dyMouse = p.y - mouse.y;
+
+const distMouse = Math.sqrt(dxMouse*dxMouse + dyMouse*dyMouse);
+
+if(distMouse < 180){
+
+ctx.beginPath();
+
+ctx.moveTo(p.x,p.y);
+ctx.lineTo(mouse.x,mouse.y);
+
+ctx.strokeStyle = `rgba(0,255,213,${1 - distMouse/180})`;
+
+ctx.lineWidth = 1;
+
+ctx.stroke();
+
+}
+
+});
+
+/* ========================= */
+/* PARTICLE CONNECTIONS */
+/* ========================= */
+
+for(let i=0;i<particles.length;i++){
+
+for(let j=i+1;j<particles.length;j++){
+
+const dx = particles[i].x - particles[j].x;
+const dy = particles[i].y - particles[j].y;
+
+const dist = Math.sqrt(dx*dx + dy*dy);
+
+if(dist < 130){
+
+ctx.beginPath();
+
+ctx.moveTo(particles[i].x,particles[i].y);
+ctx.lineTo(particles[j].x,particles[j].y);
+
+ctx.strokeStyle = `rgba(0,255,213,${0.18 - dist/1300})`;
+
+ctx.lineWidth = 1;
+
+ctx.stroke();
+
+}
+
+}
+
+}
+
+/* ========================= */
+/* BLOCKCHAIN HEX EFFECT */
+/* ========================= */
+
+for(let i=0;i<particles.length;i+=8){
+
+ctx.beginPath();
+
+ctx.strokeStyle='rgba(0,255,213,0.08)';
+ctx.lineWidth=1;
+
+ctx.arc(
+particles[i].x,
+particles[i].y,
+20 + Math.sin(particles[i].life)*5,
+0,
+Math.PI*2
+);
+
+ctx.stroke();
+
+}
+
+requestAnimationFrame(drawParticles);
+
+}
+
+drawParticles();
+
 </script>
-</body> 
+
+<body>
+
+<div class="bg-grid"></div>
+<div class="glow one"></div>
+<div class="glow two"></div>
+
+<!-- NAVBAR -->
+
+<nav>
+<div class="logo">MANTLE AI</div>
+
+<div class="nav-links">
+<a href="#features">Features</a>
+<a href="#demo">Demo</a>
+<a href="#roadmap">Roadmap</a>
+<a href="#creator">Creator</a>
+</div>
+</nav>
+
+<!-- HERO -->
+
+<section class="hero">
+
+<div class="hero-left">
+
+<h1>
+NEXT GEN<br>
+<span>MANTLE AI AGENT</span>
+</h1>
+
+<p>
+Advanced blockchain intelligence assistant powered by Gemini AI and real-time Mantle RPC infrastructure. Analyze wallets, transactions, gas, risks, and market telemetry directly from Telegram.
+</p>
+
+<div class="hero-buttons">
+
+<a href="https://t.me/MantleWhale_bot" target="_blank" class="btn btn-primary">
+Launch Telegram Bot
+</a>
+
+<a href="https://github.com/hermsan/mantle-ai-bot" target="_blank" class="btn btn-secondary">
+View Github
+</a>
+
+</div>
+
+</div>
+
+<div class="hero-right">
+
+<div class="coin">
+<img src="images/mantle-logo.png">
+</div>
+
+</div>
+
+</section>
+
+<!-- STATS -->
+
+<div class="stats">
+
+<div class="stat-card">
+<h2>24/7</h2>
+<p>AI Runtime</p>
+</div>
+
+<div class="stat-card">
+<h2>Real-Time</h2>
+<p>Blockchain Analytics</p>
+</div>
+
+<div class="stat-card">
+<h2>AI</h2>
+<p>Gemini Powered</p>
+</div>
+
+<div class="stat-card">
+<h2>RPC</h2>
+<p>On-Chain Monitoring</p>
+</div>
+
+</div>
+
+<!-- FEATURES -->
+
+<section id="features">
+
+<h2 class="section-title">
+Core <span>Features</span>
+</h2>
+
+<div class="grid">
+
+<div class="card">
+<h3>Wallet Analyzer</h3>
+<p>
+Track Mantle wallet balances instantly and monitor asset distribution directly from on-chain RPC nodes.
+</p>
+</div>
+
+<div class="card">
+<h3>AI Transaction Audit</h3>
+<p>
+Use Gemini AI to analyze blockchain transactions, identify patterns, and explain transfers in simple English.
+</p>
+</div>
+
+<div class="card">
+<h3>Gas Intelligence</h3>
+<p>
+Monitor real-time Mantle gas prices and optimize transaction execution costs efficiently.
+</p>
+</div>
+
+<div class="card">
+<h3>Risk Detection</h3>
+<p>
+AI-powered transaction risk classification with threat analysis and suspicious activity monitoring.
+</p>
+</div>
+
+<div class="card">
+<h3>Price Oracle</h3>
+<p>
+Live crypto market pricing for Mantle, Bitcoin, and Ethereum integrated directly into Telegram.
+</p>
+</div>
+
+<div class="card">
+<h3>General AI Chat</h3>
+<p>
+Users can ask blockchain questions, AI questions, coding help, or general knowledge conversations.
+</p>
+</div>
+
+</div>
+
+</section>
+
+<!-- VIDEO DEMO -->
+
+<section id="demo">
+
+<h2 class="section-title">
+Live <span>Demo Gallery</span>
+</h2>
+
+<div class="video-grid">
+
+<div class="video-card">
+
+<video controls autoplay muted loop>
+<source src="images/demo1.mp4" type="video/mp4">
+</video>
+
+<h3>Telegram AI Assistant</h3>
+
+<p>
+Demonstration of wallet analysis, AI responses, and Mantle blockchain telemetry commands.
+</p>
+
+</div>
+
+<div class="video-card">
+
+<video controls autoplay muted loop>
+<source src="images/demo2.mp4" type="video/mp4">
+</video>
+
+<h3>VS Code Development</h3>
+
+<p>
+Showcase of real-time bot coding, deployment workflow, and AI infrastructure integration.
+</p>
+
+</div>
+
+<div class="video-card">
+
+<video controls autoplay muted loop>
+<source src="images/demo3.mp4" type="video/mp4">
+</video>
+
+<h3>On-Chain Intelligence</h3>
+
+<p>
+AI-driven risk analysis and transaction interpretation inside Telegram environments.
+</p>
+
+</div>
+
+</div>
+
+</section>
+
+<!-- ROADMAP -->
+
+<section id="roadmap">
+
+<h2 class="section-title">
+Strategic <span>Roadmap</span>
+</h2>
+
+<div class="roadmap">
+
+<div class="roadmap-item">
+<h3>Phase 1 — AI Infrastructure</h3>
+<p>
+Deploy Telegram AI Agent with Mantle RPC integration and Gemini AI semantic analysis.
+</p>
+</div>
+
+<div class="roadmap-item">
+<h3>Phase 2 — Whale Alert System</h3>
+<p>
+Implement automatic whale tracking notifications and smart contract anomaly detection.
+</p>
+</div>
+
+<div class="roadmap-item">
+<h3>Phase 3 — Web Dashboard</h3>
+<p>
+Launch advanced analytics dashboard with real-time portfolio tracking and staking telemetry.
+</p>
+</div>
+
+<div class="roadmap-item">
+<h3>Phase 4 — Autonomous AI Agents</h3>
+<p>
+Build autonomous blockchain AI agents capable of executing intelligent DeFi operations.
+</p>
+</div>
+
+</div>
+
+</section>
+
+<!-- CREATOR -->
+
+<section id="creator">
+
+<h2 class="section-title">
+Project <span>Creator</span>
+</h2>
+
+<div class="card" style="text-align:center;">
+
+<h3>Built For Mantle AI Hackathon</h3>
+
+<p>
+Independent Web3 builder focused on AI infrastructure, blockchain accessibility, and intelligent automation on Mantle Network.
+</p>
+
+</div>
+
+</section>
+
+<!-- FOOTER -->
+
+<footer>
+
+© 2026 Mantle AI Agent — Powered by Mantle Network & Gemini AI
+
+</footer>
+
+</body>
 </html>
