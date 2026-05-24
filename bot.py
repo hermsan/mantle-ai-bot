@@ -5,10 +5,11 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import requests
 import telebot
-from dotenv import load_dotenv
-import google.generativeai as genai
 
-print("🚀 MANTLE AI BOT v8 STARTED")
+from dotenv import load_dotenv
+from google import genai
+
+print("🚀 MANTLE AI BOT v12 STARTED")
 
 # ==================================================
 # LOAD ENV
@@ -32,41 +33,43 @@ if not GEMINI_API_KEY:
     exit()
 
 print("✅ ENV Loaded")
-print("✅ GEMINI KEY DETECTED")
 
 # ==================================================
-# INIT BOT
+# SESSION
+# ==================================================
+session = requests.Session()
+
+# ==================================================
+# TELEGRAM BOT
 # ==================================================
 bot = telebot.TeleBot(
     TELEGRAM_TOKEN.strip(),
     parse_mode="HTML"
 )
 
-session = requests.Session()
-
 # ==================================================
-# GEMINI SETUP
+# GEMINI CLIENT
 # ==================================================
-model = None
+client = None
 
 def setup_gemini():
-    global model
+
+    global client
 
     try:
-        genai.configure(
+
+        client = genai.Client(
             api_key=GEMINI_API_KEY.strip()
         )
 
-        # MODEL STABIL UNTUK HUGGING FACE
-        model = genai.GenerativeModel(
-            "gemini-1.5-flash"
-        )
-
-        print("✅ Gemini AI Ready")
+        print("✅ Gemini Connected")
 
     except Exception as e:
-        print("❌ GEMINI SETUP ERROR:", e)
-        model = None
+
+        print("❌ GEMINI SETUP ERROR:")
+        print(e)
+
+        client = None
 
 setup_gemini()
 
@@ -76,6 +79,7 @@ setup_gemini()
 def rpc_call(method, params=None):
 
     try:
+
         if params is None:
             params = []
 
@@ -87,7 +91,7 @@ def rpc_call(method, params=None):
                 "params": params,
                 "id": 1
             },
-            timeout=15
+            timeout=20
         )
 
         response.raise_for_status()
@@ -95,6 +99,7 @@ def rpc_call(method, params=None):
         return response.json()
 
     except Exception as e:
+
         print("RPC ERROR:", e)
 
         return {
@@ -107,6 +112,7 @@ def rpc_call(method, params=None):
 def get_prices():
 
     try:
+
         url = (
             "https://api.coingecko.com/api/v3/simple/price"
             "?ids=mantle,bitcoin,ethereum"
@@ -115,13 +121,15 @@ def get_prices():
 
         response = session.get(
             url,
-            timeout=10
+            timeout=15
         )
 
         return response.json()
 
     except Exception as e:
+
         print("PRICE ERROR:", e)
+
         return {}
 
 # ==================================================
@@ -142,83 +150,59 @@ def is_valid_tx(txhash):
     )
 
 # ==================================================
-# AI FUNCTION
+# GEMINI AI
 # ==================================================
 def ask_ai(prompt):
 
-    global model
+    global client
 
     try:
-        if model is None:
+
+        if client is None:
             setup_gemini()
 
-        if model is None:
-            return (
-                "⚠️ AI unavailable.\n"
-                "Please try again later."
-            )
+        if client is None:
+            return "⚠️ AI unavailable."
 
-        response = model.generate_content(
-            prompt
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt
         )
 
-        if response:
-            text = getattr(
-                response,
-                "text",
-                ""
-            )
+        # SAFE RESPONSE
+        text = getattr(response, "text", None)
 
-            if text:
-                return text.strip()
+        if text:
+            return text.strip()
 
-        return "No AI response."
+        return "⚠️ Empty AI response."
 
     except Exception as e:
 
-        print("AI ERROR:", e)
+        print("AI ERROR:")
+        print(e)
 
-        error_text = str(e).lower()
+        error = str(e).lower()
 
-        # QUOTA ERROR
-        if (
-            "429" in error_text
-            or "quota" in error_text
-        ):
+        # QUOTA LIMIT
+        if "429" in error:
             return (
                 "⚠️ Gemini quota reached.\n"
-                "Please try again later."
+                "Please wait a few minutes."
             )
 
         # INVALID API KEY
-        if (
-            "api key" in error_text
-            or "permission" in error_text
-        ):
-            return (
-                "❌ Gemini API Key invalid."
-            )
+        if "api key" in error:
+            return "❌ Invalid Gemini API Key."
 
-        # MODEL NOT FOUND
-        if (
-            "404" in error_text
-            or "not found" in error_text
-        ):
+        # MODEL ERROR
+        if "404" in error or "not found" in error:
+            return "❌ Gemini model unavailable."
 
-            try:
-                print("🔄 Reconnecting Gemini...")
+        # AUTO RECONNECT
+        client = None
 
-                setup_gemini()
-
-            except Exception:
-                pass
-
-        model = None
-
-        return (
-            "⚠️ AI temporarily unavailable.\n"
-            "Blockchain commands still active."
-        )
+        return "⚠️ AI temporarily unavailable."
 
 # ==================================================
 # START
@@ -231,19 +215,13 @@ def start(message):
         """
 🚀 <b>Mantle AI Assistant</b>
 
-Available Commands:
+Commands:
 
 /help
 /block
 /gas
 /price
 /wallet 0xaddress
-/portfolio 0xaddress
-/tx hash
-/analyze hash
-/risk hash
-
-You can also ask normal questions.
 """
     )
 
@@ -256,16 +234,12 @@ def help_cmd(message):
     bot.reply_to(
         message,
         """
-📚 <b>Commands</b>
+📚 Commands
 
 /block
 /gas
 /price
 /wallet 0xaddress
-/portfolio 0xaddress
-/tx hash
-/analyze hash
-/risk hash
 """
     )
 
@@ -275,31 +249,25 @@ def help_cmd(message):
 @bot.message_handler(commands=["block"])
 def block(message):
 
-    res = rpc_call(
-        "eth_blockNumber"
-    )
+    res = rpc_call("eth_blockNumber")
 
     if not res.get("result"):
 
         bot.reply_to(
             message,
-            "❌ Unable to fetch block."
+            "❌ Failed fetch block."
         )
 
         return
 
-    block_num = int(
+    block_number = int(
         res["result"],
         16
     )
 
     bot.reply_to(
         message,
-        f"""
-⛓ <b>Latest Mantle Block</b>
-
-<b>{block_num:,}</b>
-"""
+        f"⛓ Latest Block:\n\n{block_number:,}"
     )
 
 # ==================================================
@@ -308,15 +276,13 @@ def block(message):
 @bot.message_handler(commands=["gas"])
 def gas(message):
 
-    res = rpc_call(
-        "eth_gasPrice"
-    )
+    res = rpc_call("eth_gasPrice")
 
     if not res.get("result"):
 
         bot.reply_to(
             message,
-            "❌ Unable to fetch gas."
+            "❌ Failed fetch gas."
         )
 
         return
@@ -328,11 +294,7 @@ def gas(message):
 
     bot.reply_to(
         message,
-        f"""
-⛽ <b>Current Gas</b>
-
-<b>{gwei:.2f} Gwei</b>
-"""
+        f"⛽ Gas:\n\n{gwei:.2f} Gwei"
     )
 
 # ==================================================
@@ -341,19 +303,19 @@ def gas(message):
 @bot.message_handler(commands=["price"])
 def price(message):
 
-    p = get_prices()
+    prices = get_prices()
 
-    mnt = p.get(
+    mnt = prices.get(
         "mantle",
         {}
     ).get("usd", 0)
 
-    btc = p.get(
+    btc = prices.get(
         "bitcoin",
         {}
     ).get("usd", 0)
 
-    eth = p.get(
+    eth = prices.get(
         "ethereum",
         {}
     ).get("usd", 0)
@@ -361,7 +323,7 @@ def price(message):
     bot.reply_to(
         message,
         f"""
-💰 <b>Live Prices</b>
+💰 Prices
 
 MNT: ${mnt}
 BTC: ${btc}
@@ -376,6 +338,7 @@ ETH: ${eth}
 def wallet(message):
 
     try:
+
         parts = message.text.split(
             maxsplit=1
         )
@@ -395,7 +358,7 @@ def wallet(message):
 
             bot.reply_to(
                 message,
-                "❌ Invalid wallet address."
+                "❌ Invalid address."
             )
 
             return
@@ -422,13 +385,12 @@ def wallet(message):
         bot.reply_to(
             message,
             f"""
-👛 <b>Wallet Balance</b>
+👛 Wallet
 
-Address:
-<code>{address}</code>
+{address}
 
 Balance:
-<b>{balance:.6f} MNT</b>
+{balance:.6f} MNT
 """
         )
 
@@ -438,195 +400,23 @@ Balance:
 
         bot.reply_to(
             message,
-            "Wallet lookup failed."
+            "Wallet failed."
         )
 
 # ==================================================
-# TX
-# ==================================================
-@bot.message_handler(commands=["tx"])
-def tx(message):
-
-    try:
-        parts = message.text.split(
-            maxsplit=1
-        )
-
-        if len(parts) < 2:
-
-            bot.reply_to(
-                message,
-                "Use:\n/tx hash"
-            )
-
-            return
-
-        txhash = parts[1].strip()
-
-        if not is_valid_tx(txhash):
-
-            bot.reply_to(
-                message,
-                "❌ Invalid tx hash."
-            )
-
-            return
-
-        res = rpc_call(
-            "eth_getTransactionByHash",
-            [txhash]
-        )
-
-        tx_data = res.get("result")
-
-        if not tx_data:
-
-            bot.reply_to(
-                message,
-                "Transaction not found."
-            )
-
-            return
-
-        bot.reply_to(
-            message,
-            f"""
-📦 <b>Transaction</b>
-
-From:
-<code>{tx_data.get('from')}</code>
-
-To:
-<code>{tx_data.get('to')}</code>
-"""
-        )
-
-    except Exception as e:
-
-        print("TX ERROR:", e)
-
-        bot.reply_to(
-            message,
-            "Transaction lookup failed."
-        )
-
-# ==================================================
-# ANALYZE
-# ==================================================
-@bot.message_handler(commands=["analyze"])
-def analyze(message):
-
-    try:
-        parts = message.text.split(
-            maxsplit=1
-        )
-
-        if len(parts) < 2:
-
-            bot.reply_to(
-                message,
-                "Use:\n/analyze hash"
-            )
-
-            return
-
-        txhash = parts[1].strip()
-
-        if not is_valid_tx(txhash):
-
-            bot.reply_to(
-                message,
-                "❌ Invalid tx hash."
-            )
-
-            return
-
-        res = rpc_call(
-            "eth_getTransactionByHash",
-            [txhash]
-        )
-
-        tx_data = res.get("result")
-
-        if not tx_data:
-
-            bot.reply_to(
-                message,
-                "Transaction not found."
-            )
-
-            return
-
-        bot.send_chat_action(
-            message.chat.id,
-            "typing"
-        )
-
-        prompt = f"""
-Analyze this Mantle blockchain transaction.
-
-From: {tx_data.get('from')}
-To: {tx_data.get('to')}
-Value: {tx_data.get('value')}
-Gas: {tx_data.get('gas')}
-
-Explain:
-- purpose
-- possible usage
-- risk level
-
-Answer shortly in English.
-"""
-
-        answer = ask_ai(prompt)
-
-        bot.reply_to(
-            message,
-            answer[:3500]
-        )
-
-    except Exception as e:
-
-        print("ANALYZE ERROR:", e)
-
-        bot.reply_to(
-            message,
-            "Analyze failed."
-        )
-
-# ==================================================
-# GENERAL CHAT
+# CHAT AI
 # ==================================================
 @bot.message_handler(func=lambda m: True)
-def general_chat(message):
+def chat(message):
 
     try:
+
         bot.send_chat_action(
             message.chat.id,
             "typing"
         )
 
-        prices = get_prices()
-
-        mnt = prices.get(
-            "mantle",
-            {}
-        ).get("usd", 0)
-
-        prompt = f"""
-You are Mantle AI Assistant.
-
-Rules:
-- Always answer in English
-- Keep answers short
-- Prioritize blockchain and Mantle ecosystem
-- Current MNT price is ${mnt}
-
-User:
-{message.text}
-"""
-
-        answer = ask_ai(prompt)
+        answer = ask_ai(message.text)
 
         bot.reply_to(
             message,
@@ -645,9 +435,7 @@ User:
 # ==================================================
 # HEALTH SERVER
 # ==================================================
-class HealthServer(
-    BaseHTTPRequestHandler
-):
+class HealthServer(BaseHTTPRequestHandler):
 
     def do_GET(self):
 
@@ -655,19 +443,12 @@ class HealthServer(
         self.end_headers()
 
         self.wfile.write(
-            b"Mantle AI Bot Active"
+            b"Bot Active"
         )
 
-    def log_message(
-        self,
-        format,
-        *args
-    ):
+    def log_message(self, format, *args):
         return
 
-# ==================================================
-# RUN HEALTH SERVER
-# ==================================================
 def run_server():
 
     PORT = int(
@@ -683,7 +464,7 @@ def run_server():
     ).serve_forever()
 
 # ==================================================
-# MAIN LOOP
+# MAIN
 # ==================================================
 if __name__ == "__main__":
 
@@ -697,9 +478,12 @@ if __name__ == "__main__":
     while True:
 
         try:
-            print(
-                "🚀 Mantle AI Bot Running..."
-            )
+
+            bot.remove_webhook()
+
+            time.sleep(2)
+
+            print("🚀 Bot Polling...")
 
             bot.infinity_polling(
                 timeout=30,
@@ -707,31 +491,14 @@ if __name__ == "__main__":
                 skip_pending=True
             )
 
-        except (
-            requests.exceptions.ReadTimeout,
-            requests.exceptions.ConnectionError
-        ) as e:
-
-            print(
-                "Telegram connection lost:",
-                e
-            )
-
-            time.sleep(5)
-
         except Exception as e:
 
-            print(
-                "MAIN LOOP ERROR:",
-                e
-            )
+            print("MAIN LOOP ERROR:")
+            print(e)
 
-            # DETEKSI DOUBLE BOT
+            # TELEGRAM 409
             if "409" in str(e):
-                print(
-                    "⚠️ Another bot instance detected."
-                )
-
+                print("⚠️ Another bot instance running.")
                 time.sleep(10)
 
             else:
