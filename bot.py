@@ -8,7 +8,7 @@ import telebot
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-print("🚀 MANTLE AI BOT v7 STARTED")
+print("🚀 MANTLE AI BOT v8 STARTED")
 
 # ==================================================
 # LOAD ENV
@@ -57,9 +57,9 @@ def setup_gemini():
             api_key=GEMINI_API_KEY.strip()
         )
 
-        # MODEL PALING STABIL UNTUK HUGGING FACE
+        # MODEL STABIL UNTUK HUGGING FACE
         model = genai.GenerativeModel(
-            "gemini-1.5-flash-latest"
+            "gemini-1.5-flash"
         )
 
         print("✅ Gemini AI Ready")
@@ -74,6 +74,7 @@ setup_gemini()
 # RPC HELPER
 # ==================================================
 def rpc_call(method, params=None):
+
     try:
         if params is None:
             params = []
@@ -104,6 +105,7 @@ def rpc_call(method, params=None):
 # PRICE HELPER
 # ==================================================
 def get_prices():
+
     try:
         url = (
             "https://api.coingecko.com/api/v3/simple/price"
@@ -126,12 +128,14 @@ def get_prices():
 # VALIDATORS
 # ==================================================
 def is_valid_address(address):
+
     return (
         address.startswith("0x")
         and len(address) == 42
     )
 
 def is_valid_tx(txhash):
+
     return (
         txhash.startswith("0x")
         and len(txhash) == 66
@@ -141,6 +145,7 @@ def is_valid_tx(txhash):
 # AI FUNCTION
 # ==================================================
 def ask_ai(prompt):
+
     global model
 
     try:
@@ -158,7 +163,11 @@ def ask_ai(prompt):
         )
 
         if response:
-            text = getattr(response, "text", "")
+            text = getattr(
+                response,
+                "text",
+                ""
+            )
 
             if text:
                 return text.strip()
@@ -166,11 +175,12 @@ def ask_ai(prompt):
         return "No AI response."
 
     except Exception as e:
+
         print("AI ERROR:", e)
 
         error_text = str(e).lower()
 
-        # AUTO RECONNECT GEMINI
+        # QUOTA ERROR
         if (
             "429" in error_text
             or "quota" in error_text
@@ -180,6 +190,7 @@ def ask_ai(prompt):
                 "Please try again later."
             )
 
+        # INVALID API KEY
         if (
             "api key" in error_text
             or "permission" in error_text
@@ -188,7 +199,20 @@ def ask_ai(prompt):
                 "❌ Gemini API Key invalid."
             )
 
-        # RESET MODEL
+        # MODEL NOT FOUND
+        if (
+            "404" in error_text
+            or "not found" in error_text
+        ):
+
+            try:
+                print("🔄 Reconnecting Gemini...")
+
+                setup_gemini()
+
+            except Exception:
+                pass
+
         model = None
 
         return (
@@ -409,91 +433,12 @@ Balance:
         )
 
     except Exception as e:
+
         print("WALLET ERROR:", e)
 
         bot.reply_to(
             message,
             "Wallet lookup failed."
-        )
-
-# ==================================================
-# PORTFOLIO
-# ==================================================
-@bot.message_handler(commands=["portfolio"])
-def portfolio(message):
-
-    try:
-        parts = message.text.split(
-            maxsplit=1
-        )
-
-        if len(parts) < 2:
-
-            bot.reply_to(
-                message,
-                "Use:\n/portfolio 0xaddress"
-            )
-
-            return
-
-        address = parts[1].strip()
-
-        if not is_valid_address(address):
-
-            bot.reply_to(
-                message,
-                "❌ Invalid address."
-            )
-
-            return
-
-        res = rpc_call(
-            "eth_getBalance",
-            [address, "latest"]
-        )
-
-        if not res.get("result"):
-
-            bot.reply_to(
-                message,
-                "Address not found."
-            )
-
-            return
-
-        balance = int(
-            res["result"],
-            16
-        ) / 1e18
-
-        prices = get_prices()
-
-        mnt_price = prices.get(
-            "mantle",
-            {}
-        ).get("usd", 0)
-
-        usd_value = balance * mnt_price
-
-        bot.reply_to(
-            message,
-            f"""
-📊 <b>Portfolio</b>
-
-MNT:
-{balance:.6f}
-
-USD Value:
-${usd_value:.2f}
-"""
-        )
-
-    except Exception as e:
-        print("PORTFOLIO ERROR:", e)
-
-        bot.reply_to(
-            message,
-            "Portfolio failed."
         )
 
 # ==================================================
@@ -557,6 +502,7 @@ To:
         )
 
     except Exception as e:
+
         print("TX ERROR:", e)
 
         bot.reply_to(
@@ -640,6 +586,7 @@ Answer shortly in English.
         )
 
     except Exception as e:
+
         print("ANALYZE ERROR:", e)
 
         bot.reply_to(
@@ -687,6 +634,7 @@ User:
         )
 
     except Exception as e:
+
         print("CHAT ERROR:", e)
 
         bot.reply_to(
@@ -778,4 +726,13 @@ if __name__ == "__main__":
                 e
             )
 
-            time.sleep(5)
+            # DETEKSI DOUBLE BOT
+            if "409" in str(e):
+                print(
+                    "⚠️ Another bot instance detected."
+                )
+
+                time.sleep(10)
+
+            else:
+                time.sleep(5)
