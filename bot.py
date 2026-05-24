@@ -64,9 +64,7 @@ def rpc_call(method, params=None):
         )
 
         response.raise_for_status()
-
         data = response.json()
-
         return data
 
     except Exception as e:
@@ -83,7 +81,6 @@ def get_prices():
         )
 
         response = session.get(url, timeout=10)
-
         return response.json()
 
     except Exception as e:
@@ -116,7 +113,6 @@ def ask_ai(prompt):
 
     except Exception as e:
         print("AI ERROR:", e)
-
         text = str(e).lower()
 
         if "quota" in text:
@@ -187,7 +183,6 @@ def block(message):
         return
 
     block_num = int(res["result"], 16)
-
     bot.reply_to(
         message,
         f"⛓ Latest Mantle Block:\n\n<b>{block_num:,}</b>"
@@ -205,7 +200,6 @@ def gas(message):
         return
 
     gwei = int(res["result"], 16) / 1e9
-
     bot.reply_to(
         message,
         f"⛽ Current Gas:\n\n<b>{gwei:.2f} Gwei</b>"
@@ -310,7 +304,6 @@ def portfolio(message):
 
         prices = get_prices()
         mnt_price = prices.get("mantle", {}).get("usd", 0)
-
         usd = balance * mnt_price
 
         bot.reply_to(
@@ -353,9 +346,9 @@ def tx(message):
             [txhash]
         )
 
-        tx = res.get("result")
+        tx_data = res.get("result")
 
-        if not tx:
+        if not tx_data:
             bot.reply_to(message, "Transaction not found.")
             return
 
@@ -365,10 +358,10 @@ def tx(message):
 📦 <b>Transaction</b>
 
 From:
-<code>{tx.get('from')}</code>
+<code>{tx_data.get('from')}</code>
 
 To:
-<code>{tx.get('to')}</code>
+<code>{tx_data.get('to')}</code>
 """
         )
 
@@ -399,9 +392,9 @@ def analyze(message):
             [txhash]
         )
 
-        tx = res.get("result")
+        tx_data = res.get("result")
 
-        if not tx:
+        if not tx_data:
             bot.reply_to(message, "Transaction not found.")
             return
 
@@ -413,10 +406,10 @@ def analyze(message):
         prompt = f"""
 Analyze this blockchain transaction.
 
-From: {tx.get('from')}
-To: {tx.get('to')}
-Value: {tx.get('value')}
-Gas: {tx.get('gas')}
+From: {tx_data.get('from')}
+To: {tx_data.get('to')}
+Value: {tx_data.get('value')}
+Gas: {tx_data.get('gas')}
 
 Explain:
 1. Purpose
@@ -427,7 +420,6 @@ Answer in English.
 """
 
         answer = ask_ai(prompt)
-
         bot.reply_to(message, answer[:3500])
 
     except Exception as e:
@@ -457,18 +449,18 @@ def risk(message):
             [txhash]
         )
 
-        tx = res.get("result")
+        tx_data = res.get("result")
 
-        if not tx:
+        if not tx_data:
             bot.reply_to(message, "Transaction not found.")
             return
 
         prompt = f"""
 Analyze blockchain transaction risk.
 
-From: {tx.get('from')}
-To: {tx.get('to')}
-Value: {tx.get('value')}
+From: {tx_data.get('from')}
+To: {tx_data.get('to')}
+Value: {tx_data.get('value')}
 
 Classify:
 LOW / MEDIUM / HIGH
@@ -477,7 +469,6 @@ Explain shortly.
 """
 
         answer = ask_ai(prompt)
-
         bot.reply_to(message, answer[:3500])
 
     except Exception as e:
@@ -496,7 +487,6 @@ def general_chat(message):
         )
 
         prices = get_prices()
-
         mnt = prices.get("mantle", {}).get("usd", 0)
 
         prompt = f"""
@@ -514,7 +504,6 @@ User:
 """
 
         answer = ask_ai(prompt)
-
         bot.reply_to(message, answer[:3500])
 
     except Exception as e:
@@ -529,7 +518,7 @@ class HealthServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(
-            b"Mantle AI Bot Running"
+            b"Mantle AI Bot Active"
         )
 
     def log_message(self, format, *args):
@@ -543,7 +532,7 @@ def run_server():
     ).serve_forever()
 
 # ==================================================
-# MAIN
+# MAIN LOOP WITH ANTI-CRASH PROTECTION
 # ==================================================
 if __name__ == "__main__":
 
@@ -554,14 +543,18 @@ if __name__ == "__main__":
 
     print("✅ BOT ONLINE")
 
+    # Sistem pelindung loop tak terbatas dari disconnect/timeout
     while True:
         try:
+            print("Mantle AI Bot is running and monitoring...")
             bot.infinity_polling(
-                timeout=60,
-                long_polling_timeout=60,
+                timeout=10, 
+                long_polling_timeout=5, 
                 skip_pending=True
             )
-
+        except (requests.exceptions.ReadTimeout, requests.exceptions.ConnectionError) as e:
+            print(f"Telegram connection timeout/disconnected. Retrying in 5 seconds... Error: {e}")
+            time.sleep(5)
         except Exception as e:
-            print("🔄 RECONNECT:", e)
-            time.sleep(10)
+            print(f"An unexpected error occurred: {e}. Restarting bot...")
+            time.sleep(5)
