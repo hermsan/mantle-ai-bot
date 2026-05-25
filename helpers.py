@@ -1,3 +1,4 @@
+import os
 import time
 import requests
 import google.generativeai as genai
@@ -6,15 +7,21 @@ RPC_URL = "https://rpc.mantle.xyz"
 session = requests.Session()
 session.headers.update({"User-Agent": "MantleAI/1.0"})
 
-# State manajemen global untuk AI
+# State manajemen global untuk perlindungan kuota
 last_ai_request = 0
 quota_block_until = 0
 
 def setup_gemini(api_key):
     try:
-        # Menggunakan library generasi stabil guna menghindari masalah kuota concurrency cloud
-        genai.configure(api_key=api_key.strip())
-        print("✅ Gemini Connected")
+        # Menggunakan v1beta karena model generasi 2.5 didukung penuh di sini
+        os.environ["GOOGLE_GENAI_API_VERSION"] = "v1beta"
+        os.environ["GOOGLE_API_USE_CLIENT_CERTIFICATE"] = "false"
+        
+        # Bersihkan sisa-sisa spasi gaib dari Hugging Face Secrets
+        clean_key = api_key.strip().replace('"', '').replace("'", "")
+        
+        genai.configure(api_key=clean_key, transport='rest')
+        print("✅ Gemini Connected via REST v1beta (Era Gemini 2.5)")
         return True
     except Exception as e:
         print("❌ GEMINI SETUP ERROR:", e)
@@ -66,12 +73,12 @@ def ask_ai(prompt):
         cooldown = 5
         if now - last_ai_request < cooldown:
             remaining = int(cooldown - (now - last_ai_request)) + 1
-            return f"⚠️ Please wait {remaining}s before next AI request."
+            return f"⚠️ Please wait {remaining}s."
 
         last_ai_request = now
 
-        # 3. RUN MODEL (Dialihkan ke 1.5-flash demi ketahanan Kuota Free Tier)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        # 3. RUN MODEL (KUNCI UTAMA: Menggunakan gemini-2.5-flash yang super aktif)
+        model = genai.GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt)
         
         if response and response.text:
@@ -91,7 +98,7 @@ def ask_ai(prompt):
             return "❌ Invalid Gemini API Key."
             
         if "404" in error or "not found" in error:
-            return "❌ Gemini model unavailable."
+            return f"❌ Gemini model unavailable. Details: {str(e)[:50]}"
             
         if "connection" in error or "timeout" in error:
             return "⚠️ Network error."

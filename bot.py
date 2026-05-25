@@ -140,7 +140,7 @@ if __name__ == "__main__":
             bot.remove_webhook()
             time.sleep(2)
             bot.infinity_polling(
-                timeout=20, # Dipersingkat agar deteksi RTO jaringan lebih responsif
+                timeout=20,
                 long_polling_timeout=10,
                 skip_pending=True,
                 allowed_updates=["message"]
